@@ -1,0 +1,894 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Creator Clarity GPT</title>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root {
+  --bg: #f7f5f0;
+  --surface: #ffffff;
+  --surface2: #f0ede6;
+  --border: #e5e0d8;
+  --border2: #d4cfc5;
+  --text: #1a1814;
+  --muted: #7a7468;
+  --hint: #b0aa9f;
+  --accent: #2d5a3d;
+  --accent-light: #e8f0ea;
+  --accent-border: #b8d4be;
+  --income: #8b4513;
+  --income-light: #fdf2ec;
+  --income-border: #e8c4a8;
+  --maint: #4a4080;
+  --maint-light: #f0eef8;
+  --maint-border: #c5bfe8;
+  --danger: #c0392b;
+  --radius: 12px;
+  --radius-sm: 8px;
+}
+
+html { height: 100%; }
+body {
+  font-family: 'Geist', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* ── API KEY GATE ── */
+#gate {
+  position: fixed; inset: 0;
+  background: var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  z-index: 100;
+}
+.gate-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 40px 36px;
+  max-width: 420px;
+  width: 100%;
+}
+.gate-logo {
+  font-family: 'Instrument Serif', serif;
+  font-size: 28px;
+  color: var(--text);
+  margin-bottom: 6px;
+  letter-spacing: -0.5px;
+}
+.gate-logo span { color: var(--accent); font-style: italic; }
+.gate-tagline {
+  font-size: 13px;
+  color: var(--muted);
+  margin-bottom: 32px;
+  line-height: 1.5;
+}
+.gate-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--muted);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+.gate-input {
+  width: 100%;
+  padding: 13px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface2);
+  color: var(--text);
+  font-family: 'Geist', monospace;
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.15s;
+  margin-bottom: 12px;
+}
+.gate-input:focus { border-color: var(--accent); }
+.gate-input::placeholder { color: var(--hint); }
+.gate-btn {
+  width: 100%;
+  padding: 13px;
+  background: var(--text);
+  color: var(--bg);
+  border: none;
+  border-radius: var(--radius-sm);
+  font-family: 'Geist', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.15s;
+  margin-bottom: 16px;
+}
+.gate-btn:hover { opacity: 0.85; }
+.gate-note {
+  font-size: 12px;
+  color: var(--hint);
+  line-height: 1.6;
+  text-align: center;
+}
+.gate-note a { color: var(--muted); }
+.gate-error {
+  font-size: 12px;
+  color: var(--danger);
+  margin-top: 8px;
+  display: none;
+}
+
+/* ── LAYOUT ── */
+#app {
+  display: none;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* ── TOP BAR ── */
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  flex-shrink: 0;
+}
+.topbar-left { display: flex; align-items: center; gap: 12px; }
+.topbar-logo {
+  font-family: 'Instrument Serif', serif;
+  font-size: 20px;
+  letter-spacing: -0.3px;
+  color: var(--text);
+}
+.topbar-logo span { color: var(--accent); font-style: italic; }
+.topbar-badge {
+  font-size: 11px;
+  font-weight: 500;
+  padding: 3px 9px;
+  border-radius: 20px;
+  background: var(--accent-light);
+  color: var(--accent);
+  border: 1px solid var(--accent-border);
+}
+.topbar-right { display: flex; align-items: center; gap: 8px; }
+.icon-btn {
+  width: 32px; height: 32px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: transparent;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  color: var(--muted);
+  transition: background 0.15s, color 0.15s;
+}
+.icon-btn:hover { background: var(--surface2); color: var(--text); }
+
+/* ── BODY ── */
+.body-wrap {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* ── SIDEBAR ── */
+.sidebar {
+  width: 220px;
+  border-right: 1px solid var(--border);
+  background: var(--surface);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  overflow-y: auto;
+}
+.sidebar-section {
+  padding: 16px 14px 8px;
+}
+.sidebar-label {
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--hint);
+  padding: 0 6px;
+  margin-bottom: 6px;
+}
+.prompt-chip {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 9px 10px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  font-family: 'Geist', sans-serif;
+  font-size: 13px;
+  color: var(--muted);
+  cursor: pointer;
+  line-height: 1.4;
+  transition: background 0.12s, color 0.12s;
+  margin-bottom: 2px;
+}
+.prompt-chip:hover { background: var(--surface2); color: var(--text); }
+.prompt-chip .chip-tag {
+  display: block;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  margin-bottom: 2px;
+}
+.chip-tag.growth { color: var(--accent); }
+.chip-tag.income { color: var(--income); }
+.chip-tag.maint { color: var(--maint); }
+
+.sidebar-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 8px 14px;
+}
+.new-chat-btn {
+  margin: 12px 14px;
+  padding: 9px 14px;
+  background: var(--text);
+  color: var(--bg);
+  border: none;
+  border-radius: 8px;
+  font-family: 'Geist', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex; align-items: center; gap: 6px;
+  transition: opacity 0.15s;
+}
+.new-chat-btn:hover { opacity: 0.85; }
+
+/* ── CHAT AREA ── */
+.chat-wrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+.messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  scroll-behavior: smooth;
+}
+
+/* ── EMPTY STATE ── */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  text-align: center;
+  padding: 40px 20px;
+}
+.empty-icon {
+  width: 56px; height: 56px;
+  border-radius: 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 16px;
+}
+.empty-title {
+  font-family: 'Instrument Serif', serif;
+  font-size: 24px;
+  color: var(--text);
+  margin-bottom: 8px;
+  letter-spacing: -0.3px;
+}
+.empty-sub {
+  font-size: 14px;
+  color: var(--muted);
+  max-width: 320px;
+  line-height: 1.6;
+  margin-bottom: 28px;
+}
+.starter-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  width: 100%;
+  max-width: 500px;
+}
+.starter-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s, transform 0.1s;
+}
+.starter-card:hover { border-color: var(--border2); transform: translateY(-1px); }
+.starter-card:active { transform: scale(0.99); }
+.starter-card-tag {
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  margin-bottom: 5px;
+}
+.starter-card-tag.growth { color: var(--accent); }
+.starter-card-tag.income { color: var(--income); }
+.starter-card-tag.maint { color: var(--maint); }
+.starter-card-text { font-size: 13px; color: var(--text); line-height: 1.4; }
+
+/* ── MESSAGES ── */
+.msg-row {
+  display: flex;
+  gap: 12px;
+  max-width: 760px;
+  width: 100%;
+  margin: 0 auto;
+  animation: fadeUp 0.25s ease forwards;
+}
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.msg-row.user { flex-direction: row-reverse; }
+.msg-avatar {
+  width: 30px; height: 30px;
+  border-radius: 8px;
+  flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px;
+  font-weight: 500;
+  margin-top: 2px;
+}
+.msg-avatar.ai {
+  background: var(--text);
+  color: var(--bg);
+}
+.msg-avatar.user {
+  background: var(--accent-light);
+  color: var(--accent);
+  border: 1px solid var(--accent-border);
+}
+.msg-content { flex: 1; min-width: 0; }
+.msg-bubble {
+  font-size: 14px;
+  line-height: 1.75;
+  color: var(--text);
+}
+.msg-row.user .msg-bubble {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px 2px 12px 12px;
+  padding: 12px 16px;
+  display: inline-block;
+  max-width: 85%;
+  float: right;
+}
+.msg-row.ai .msg-bubble { padding: 4px 0; }
+
+.msg-bubble p { margin-bottom: 12px; }
+.msg-bubble p:last-child { margin-bottom: 0; }
+.msg-bubble strong { font-weight: 500; color: var(--text); }
+.msg-bubble ul, .msg-bubble ol { padding-left: 20px; margin-bottom: 12px; }
+.msg-bubble li { margin-bottom: 4px; }
+.msg-bubble code {
+  font-family: monospace;
+  font-size: 12px;
+  background: var(--surface2);
+  padding: 2px 6px;
+  border-radius: 4px;
+  color: var(--accent);
+}
+.msg-bubble h3 {
+  font-family: 'Instrument Serif', serif;
+  font-size: 17px;
+  font-weight: 400;
+  margin-bottom: 8px;
+  color: var(--text);
+}
+
+.typing-dots {
+  display: flex; gap: 4px; align-items: center;
+  padding: 14px 0;
+}
+.dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--hint);
+  animation: pulse 1.2s ease-in-out infinite;
+}
+.dot:nth-child(2) { animation-delay: 0.2s; }
+.dot:nth-child(3) { animation-delay: 0.4s; }
+@keyframes pulse {
+  0%,60%,100% { transform: scale(1); opacity: 0.5; }
+  30% { transform: scale(1.3); opacity: 1; }
+}
+
+/* ── INPUT AREA ── */
+.input-area {
+  padding: 16px 20px 20px;
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+  flex-shrink: 0;
+}
+.input-wrap {
+  max-width: 760px;
+  margin: 0 auto;
+}
+.input-box {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  background: var(--bg);
+  border: 1px solid var(--border2);
+  border-radius: 14px;
+  padding: 10px 12px;
+  transition: border-color 0.15s;
+}
+.input-box:focus-within { border-color: var(--text); }
+#userInput {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-family: 'Geist', sans-serif;
+  font-size: 14px;
+  color: var(--text);
+  outline: none;
+  resize: none;
+  max-height: 140px;
+  min-height: 22px;
+  line-height: 1.5;
+}
+#userInput::placeholder { color: var(--hint); }
+.send-btn {
+  width: 34px; height: 34px;
+  border-radius: 9px;
+  border: none;
+  background: var(--text);
+  color: var(--bg);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  transition: opacity 0.15s, transform 0.1s;
+}
+.send-btn:hover { opacity: 0.8; }
+.send-btn:active { transform: scale(0.95); }
+.send-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+.input-hint {
+  font-size: 11px;
+  color: var(--hint);
+  margin-top: 8px;
+  text-align: center;
+}
+
+/* ── MOBILE ── */
+@media (max-width: 600px) {
+  .sidebar { display: none; }
+  .starter-grid { grid-template-columns: 1fr; }
+  .gate-card { padding: 28px 20px; }
+}
+</style>
+</head>
+<body>
+
+<!-- API KEY GATE -->
+<div id="gate">
+  <div class="gate-card">
+    <div class="gate-logo">Creator <span>Clarity</span> GPT</div>
+    <div class="gate-tagline">Your personal AI coach built on the Daily Creator Clarity Kit — for content creators and freelancers.</div>
+
+    <div class="gate-label">Your OpenAI API Key</div>
+    <input class="gate-input" type="password" id="apiKeyInput" placeholder="sk-proj-..." autocomplete="off" />
+    <div class="gate-error" id="gate-error">Invalid key or connection failed. Try again.</div>
+    <button class="gate-btn" onclick="saveKey()">Enter the tool</button>
+    <div class="gate-note">
+      Your key is stored only in your browser — never sent to us.<br>
+      Don't have a key? <a href="https://platform.openai.com/api-keys" target="_blank">Get one free at OpenAI →</a><br>
+      Usage costs approx $0.002 per conversation.
+    </div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="app">
+
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="topbar-logo">Creator <span>Clarity</span> GPT</div>
+      <div class="topbar-badge">Daily Creator Kit</div>
+    </div>
+    <div class="topbar-right">
+      <button class="icon-btn" onclick="clearChat()" title="New chat">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 2v10M2 7h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      </button>
+      <button class="icon-btn" onclick="logout()" title="Change API key">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M9 2h3v3M12 2L7 7M5 3H2v9h9V9" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <div class="body-wrap">
+
+    <div class="sidebar">
+      <button class="new-chat-btn" onclick="clearChat()">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1v10M1 6h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        New chat
+      </button>
+      <div class="sidebar-divider"></div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-label">Growth prompts</div>
+        <button class="prompt-chip" onclick="usePrompt(this.dataset.p)" data-p="Give me 5 content ideas for today based on my niche as a digital product creator on Threads and Instagram.">
+          <span class="chip-tag growth">Growth</span>
+          Content ideas for today
+        </button>
+        <button class="prompt-chip" onclick="usePrompt(this.dataset.p)" data-p="Write a punchy Threads post about the 3-bucket system (Growth, Income, Maintenance). Make it feel real, not preachy.">
+          <span class="chip-tag growth">Growth</span>
+          Write a Threads post
+        </button>
+        <button class="prompt-chip" onclick="usePrompt(this.dataset.p)" data-p="Turn this idea into a LinkedIn post with a strong hook: [paste your idea here]">
+          <span class="chip-tag growth">Growth</span>
+          LinkedIn post from idea
+        </button>
+        <button class="prompt-chip" onclick="usePrompt(this.dataset.p)" data-p="Give me 3 ways to repurpose one piece of content across Threads, Instagram carousel, and LinkedIn.">
+          <span class="chip-tag growth">Growth</span>
+          Repurpose content
+        </button>
+        <button class="prompt-chip" onclick="usePrompt(this.dataset.p)" data-p="Write a strong hook for a post about productivity for creators who overthink and never publish.">
+          <span class="chip-tag growth">Growth</span>
+          Hook for overthinking post
+        </button>
+      </div>
+
+      <div class="sidebar-divider"></div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-label">Income prompts</div>
+        <button class="prompt-chip" onclick="usePrompt(this.dataset.p)" data-p="Write a cold outreach DM I can send to a potential client for my freelance [service] business. Keep it short, specific, and not salesy.">
+          <span class="chip-tag income">Income</span>
+          Cold outreach DM
+        </button>
+        <button class="prompt-chip" onclick="usePrompt(this.dataset.p)" data-p="Write a short proposal for a [project type] client. Include scope, deliverables, and a clear price anchor.">
+          <span class="chip-tag income">Income</span>
+          Draft a proposal
+        </button>
+        <button class="prompt-chip" onclick="usePrompt(this.dataset.p)" data-p="Write a polite follow-up message to a client who hasn't responded to my proposal in 5 days.">
+          <span class="chip-tag income">Income</span>
+          Follow-up email
+        </button>
+        <button class="prompt-chip" onclick="usePrompt(this.dataset.p)" data-p="Help me respond to a client who says my price is too high. I don't want to lower it but I want to keep the relationship.">
+          <span class="chip-tag income">Income</span>
+          Handle price objection
+        </button>
+        <button class="prompt-chip" onclick="usePrompt(this.dataset.p)" data-p="Suggest 3 upsell or add-on services I can offer to an existing client who hired me for [main service].">
+          <span class="chip-tag income">Income</span>
+          Upsell ideas
+        </button>
+      </div>
+
+      <div class="sidebar-divider"></div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-label">Maintenance prompts</div>
+        <button class="prompt-chip" onclick="usePrompt(this.dataset.p)" data-p="Create a simple 30-day skill learning plan for [skill] that I can do in 20 minutes a day.">
+          <span class="chip-tag maint">Maintain</span>
+          30-day skill plan
+        </button>
+        <button class="prompt-chip" onclick="usePrompt(this.dataset.p)" data-p="I have these tasks piling up: [list them]. Help me sort them by what I should actually do vs. delete vs. delegate.">
+          <span class="chip-tag maint">Maintain</span>
+          Sort my task pile
+        </button>
+        <button class="prompt-chip" onclick="usePrompt(this.dataset.p)" data-p="Suggest a simple weekly content workflow I can repeat every week without burning out. I create content part-time.">
+          <span class="chip-tag maint">Maintain</span>
+          Weekly workflow
+        </button>
+      </div>
+    </div>
+
+    <div class="chat-wrap">
+      <div class="messages" id="messages">
+        <div class="empty-state" id="emptyState">
+          <div class="empty-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z" fill="#1a1814" opacity=".15"/><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-5h2v2h-2zm0-8h2v6h-2z" fill="#2d5a3d"/></svg>
+          </div>
+          <div class="empty-title">What are you working on today?</div>
+          <div class="empty-sub">Ask anything about content creation, client work, productivity, or use a prompt from the sidebar to get started fast.</div>
+          <div class="starter-grid">
+            <div class="starter-card" onclick="usePrompt('I am doing a Growth Day today. Give me 3 specific content ideas for a creator who sells productivity tools.')">
+              <div class="starter-card-tag growth">Growth Day</div>
+              <div class="starter-card-text">Give me content ideas for today</div>
+            </div>
+            <div class="starter-card" onclick="usePrompt('Write me a cold outreach DM to send to a potential client for my freelance writing services. Short, no fluff.')">
+              <div class="starter-card-tag income">Income Day</div>
+              <div class="starter-card-text">Write an outreach message</div>
+            </div>
+            <div class="starter-card" onclick="usePrompt('I am feeling overwhelmed today. Help me pick ONE small task from the Maintenance bucket to feel productive without burning out more.')">
+              <div class="starter-card-tag maint">Maintenance Day</div>
+              <div class="starter-card-text">Help me pick a micro-task</div>
+            </div>
+            <div class="starter-card" onclick="usePrompt('I keep starting content but never finishing. What is the one thing I should change about how I work?')">
+              <div class="starter-card-tag growth">Clarity</div>
+              <div class="starter-card-text">Why am I never finishing things?</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="input-area">
+        <div class="input-wrap">
+          <div class="input-box">
+            <textarea id="userInput" rows="1" placeholder="Ask anything about your creative work today..."
+              onkeydown="handleKey(event)"
+              oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"></textarea>
+            <button class="send-btn" id="sendBtn" onclick="sendMessage()">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M12.5 7L1.5 1.5 4 7 1.5 12.5 12.5 7z" fill="currentColor"/></svg>
+            </button>
+          </div>
+          <div class="input-hint">Powered by OpenAI · Built on the Daily Creator Clarity Kit</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const SYSTEM_PROMPT = `You are the Creator Clarity GPT — a sharp, no-fluff AI assistant built specifically for content creators and freelancers who use the Daily Creator Clarity Kit.
+
+You are trained on these core principles from the kit:
+
+THE 3-BUCKET SYSTEM:
+- GROWTH DAY: Creating content, publishing, engagement, building audience. Max 90 minutes. Stop when published, not when perfected.
+- INCOME DAY: Client work, outreach, deliverables, proposals. Work until ONE outcome is complete, then stop.
+- MAINTENANCE DAY: Learning, admin, skill improvement, recovery. Only 30-60 minutes. Rest is productive.
+
+THE CORE RULES:
+- One bucket per day. Never mix them.
+- Context switching costs 15-25 minutes each time. 3 switches = 1 hour lost.
+- Progress over perfection. Published beats perfect.
+- The real problem is decision overload, not lack of discipline.
+
+YOUR PERSONALITY:
+- Direct and practical. No motivation speeches, no hustle culture.
+- You give specific, actionable outputs — actual post drafts, real templates, concrete ideas.
+- You understand the creator struggle: overthinking, context switching, guilt about not doing enough.
+- You help people do LESS, better — not more.
+- When someone asks for content ideas, give real, specific ideas they can use today.
+- When someone asks for templates, give complete, copy-paste ready templates.
+- Keep answers focused. Don't pad. Don't repeat yourself.
+- Use markdown formatting for clarity (bold, bullets, headers where helpful).
+- Always stay in the context of the kit's framework when relevant.`;
+
+let messages = [];
+let apiKey = localStorage.getItem('ccgpt_key') || '';
+let isLoading = false;
+
+function saveKey() {
+  const key = document.getElementById('apiKeyInput').value.trim();
+  if (!key.startsWith('sk-')) {
+    document.getElementById('gate-error').style.display = 'block';
+    return;
+  }
+  apiKey = key;
+  localStorage.setItem('ccgpt_key', key);
+  document.getElementById('gate').style.display = 'none';
+  document.getElementById('app').style.display = 'flex';
+}
+
+function logout() {
+  localStorage.removeItem('ccgpt_key');
+  apiKey = '';
+  document.getElementById('apiKeyInput').value = '';
+  document.getElementById('gate-error').style.display = 'none';
+  document.getElementById('gate').style.display = 'flex';
+  document.getElementById('app').style.display = 'none';
+}
+
+if (apiKey) {
+  document.getElementById('gate').style.display = 'none';
+  document.getElementById('app').style.display = 'flex';
+}
+
+function handleKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
+  }
+}
+
+function usePrompt(text) {
+  document.getElementById('userInput').value = text;
+  document.getElementById('userInput').style.height = 'auto';
+  document.getElementById('userInput').style.height = document.getElementById('userInput').scrollHeight + 'px';
+  document.getElementById('userInput').focus();
+}
+
+function clearChat() {
+  messages = [];
+  const container = document.getElementById('messages');
+  container.innerHTML = '';
+  const empty = document.createElement('div');
+  empty.className = 'empty-state';
+  empty.id = 'emptyState';
+  empty.innerHTML = `
+    <div class="empty-icon">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-5h2v2h-2zm0-8h2v6h-2z" fill="#2d5a3d"/></svg>
+    </div>
+    <div class="empty-title">What are you working on today?</div>
+    <div class="empty-sub">Ask anything about content creation, client work, productivity, or use a prompt from the sidebar.</div>
+    <div class="starter-grid">
+      <div class="starter-card" onclick="usePrompt('I am doing a Growth Day today. Give me 3 specific content ideas for a creator who sells productivity tools.')">
+        <div class="starter-card-tag growth">Growth Day</div>
+        <div class="starter-card-text">Give me content ideas for today</div>
+      </div>
+      <div class="starter-card" onclick="usePrompt('Write me a cold outreach DM to send to a potential client for my freelance writing services. Short, no fluff.')">
+        <div class="starter-card-tag income">Income Day</div>
+        <div class="starter-card-text">Write an outreach message</div>
+      </div>
+      <div class="starter-card" onclick="usePrompt('I am feeling overwhelmed today. Help me pick ONE small task from the Maintenance bucket.')">
+        <div class="starter-card-tag maint">Maintenance Day</div>
+        <div class="starter-card-text">Help me pick a micro-task</div>
+      </div>
+      <div class="starter-card" onclick="usePrompt('I keep starting content but never finishing. What is the one thing I should change?')">
+        <div class="starter-card-tag growth">Clarity</div>
+        <div class="starter-card-text">Why am I never finishing things?</div>
+      </div>
+    </div>`;
+  container.appendChild(empty);
+}
+
+async function sendMessage() {
+  const input = document.getElementById('userInput');
+  const text = input.value.trim();
+  if (!text || isLoading) return;
+
+  const empty = document.getElementById('emptyState');
+  if (empty) empty.remove();
+
+  input.value = '';
+  input.style.height = 'auto';
+  isLoading = true;
+  document.getElementById('sendBtn').disabled = true;
+
+  messages.push({ role: 'user', content: text });
+  appendMessage('user', text);
+
+  const typingId = appendTyping();
+
+  try {
+    const isLocal = location.protocol === 'file:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+    const endpoint = isLocal
+      ? 'https://corsproxy.io/?https://api.openai.com/v1/chat/completions'
+      : 'https://api.openai.com/v1/chat/completions';
+
+    const res = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini',
+        messages: [
+          { role: 'system', content: SYSTEM_PROMPT },
+          ...messages
+        ],
+        max_tokens: 1000,
+        temperature: 0.7,
+        stream: false
+      })
+    });
+
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error?.message || 'API error');
+    }
+
+    const data = await res.json();
+    const reply = data.choices[0].message.content;
+    messages.push({ role: 'assistant', content: reply });
+
+    removeTyping(typingId);
+    appendMessage('ai', reply);
+
+  } catch (err) {
+    removeTyping(typingId);
+    let errMsg = err.message || '';
+    let friendly = '';
+    if (errMsg.includes('401') || errMsg.includes('invalid_api_key') || errMsg.includes('Incorrect API')) {
+      friendly = 'Invalid API key. Click the top-right button to re-enter your key. Get one free at platform.openai.com/api-keys';
+    } else if (errMsg.includes('429') || errMsg.includes('quota')) {
+      friendly = 'Rate limit reached. Your free OpenAI credits may be used up. Check your usage at platform.openai.com/usage';
+    } else if ('NetworkError' in String(errMsg) || errMsg.includes('fetch') || errMsg.includes('network') || errMsg.includes('Network')) {
+      friendly = 'Connection blocked. You must host this file online — not open it locally. Upload to GitHub Pages (free, 2 minutes) and it will work perfectly.';
+    } else {
+      friendly = 'Something went wrong: ' + errMsg + '. Try refreshing or re-entering your API key.';
+    }
+    appendMessage('ai', friendly);
+    messages.pop();
+  }
+
+  isLoading = false;
+  document.getElementById('sendBtn').disabled = false;
+  input.focus();
+}
+
+function appendMessage(role, content) {
+  const container = document.getElementById('messages');
+  const row = document.createElement('div');
+  row.className = `msg-row ${role}`;
+
+  const avText = role === 'ai' ? 'AI' : 'You';
+  const formatted = role === 'ai' ? formatMarkdown(content) : escapeHtml(content);
+
+  row.innerHTML = `
+    <div class="msg-avatar ${role}">${avText}</div>
+    <div class="msg-content">
+      <div class="msg-bubble">${formatted}</div>
+    </div>`;
+
+  container.appendChild(row);
+  container.scrollTop = container.scrollHeight;
+}
+
+function appendTyping() {
+  const container = document.getElementById('messages');
+  const id = 'typing-' + Date.now();
+  const row = document.createElement('div');
+  row.className = 'msg-row ai';
+  row.id = id;
+  row.innerHTML = `
+    <div class="msg-avatar ai">AI</div>
+    <div class="msg-content">
+      <div class="typing-dots">
+        <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+      </div>
+    </div>`;
+  container.appendChild(row);
+  container.scrollTop = container.scrollHeight;
+  return id;
+}
+
+function removeTyping(id) {
+  const el = document.getElementById(id);
+  if (el) el.remove();
+}
+
+function escapeHtml(t) {
+  return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function formatMarkdown(text) {
+  let t = escapeHtml(text);
+  t = t.replace(/^### (.+)$/gm, '<h3>$1</h3>');
+  t = t.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  t = t.replace(/`([^`]+)`/g, '<code>$1</code>');
+  t = t.replace(/^\* (.+)$/gm, '<li>$1</li>');
+  t = t.replace(/^- (.+)$/gm, '<li>$1</li>');
+  t = t.replace(/^\d+\. (.+)$/gm, '<li>$1</li>');
+  t = t.replace(/(<li>.*<\/li>\n?)+/g, m => `<ul>${m}</ul>`);
+  t = t.split(/\n\n+/).map(p => {
+    if (p.startsWith('<h3>') || p.startsWith('<ul>') || p.startsWith('<li>')) return p;
+    return `<p>${p.replace(/\n/g, '<br>')}</p>`;
+  }).join('');
+  return t;
+}
+</script>
+</body>
+</html>
